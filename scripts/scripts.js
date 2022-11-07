@@ -19,29 +19,36 @@
 export function sampleRUM(checkpoint, data = {}) {
   sampleRUM.defer = sampleRUM.defer || [];
   const defer = (fnname) => {
-    sampleRUM[fnname] = sampleRUM[fnname]
-      || ((...args) => sampleRUM.defer.push({ fnname, args }));
+    sampleRUM[fnname] =
+      sampleRUM[fnname] ||
+      ((...args) => sampleRUM.defer.push({ fnname, args }));
   };
-  sampleRUM.drain = sampleRUM.drain
-    || ((dfnname, fn) => {
+  sampleRUM.drain =
+    sampleRUM.drain ||
+    ((dfnname, fn) => {
       sampleRUM[dfnname] = fn;
       sampleRUM.defer
         .filter(({ fnname }) => dfnname === fnname)
         .forEach(({ fnname, args }) => sampleRUM[fnname](...args));
     });
-  sampleRUM.on = (chkpnt, fn) => { sampleRUM.cases[chkpnt] = fn; };
+  sampleRUM.on = (chkpnt, fn) => {
+    sampleRUM.cases[chkpnt] = fn;
+  };
   defer('observe');
   defer('cwv');
   try {
     window.hlx = window.hlx || {};
     if (!window.hlx.rum) {
       const usp = new URLSearchParams(window.location.search);
-      const weight = (usp.get('rum') === 'on') ? 1 : 100; // with parameter, weight is 1. Defaults to 100.
+      const weight = usp.get('rum') === 'on' ? 1 : 100; // with parameter, weight is 1. Defaults to 100.
       // eslint-disable-next-line no-bitwise
-      const hashCode = (s) => s.split('').reduce((a, b) => (((a << 5) - a) + b.charCodeAt(0)) | 0, 0);
-      const id = `${hashCode(window.location.href)}-${new Date().getTime()}-${Math.random().toString(16).substr(2, 14)}`;
+      const hashCode = (s) =>
+        s.split('').reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0);
+      const id = `${hashCode(
+        window.location.href
+      )}-${new Date().getTime()}-${Math.random().toString(16).substr(2, 14)}`;
       const random = Math.random();
-      const isSelected = (random * weight < 1);
+      const isSelected = random * weight < 1;
       // eslint-disable-next-line object-curly-newline
       window.hlx.rum = { weight, id, random, isSelected, sampleRUM };
     }
@@ -49,7 +56,14 @@ export function sampleRUM(checkpoint, data = {}) {
     if (window.hlx && window.hlx.rum && window.hlx.rum.isSelected) {
       const sendPing = (pdata = data) => {
         // eslint-disable-next-line object-curly-newline, max-len, no-use-before-define
-        const body = JSON.stringify({ weight, id, referer: window.location.href, generation: RUM_GENERATION, checkpoint, ...data });
+        const body = JSON.stringify({
+          weight,
+          id,
+          referer: window.location.href,
+          generation: RUM_GENERATION,
+          checkpoint,
+          ...data,
+        });
         const url = `https://rum.hlx.page/.rum/${weight}`;
         // eslint-disable-next-line no-unused-expressions
         navigator.sendBeacon(url, body);
@@ -61,14 +75,17 @@ export function sampleRUM(checkpoint, data = {}) {
         lazy: () => {
           // use classic script to avoid CORS issues
           const script = document.createElement('script');
-          script.src = 'https://rum.hlx.page/.rum/@adobe/helix-rum-enhancer@^1/src/index.js';
+          script.src =
+            'https://rum.hlx.page/.rum/@adobe/helix-rum-enhancer@^1/src/index.js';
           document.head.appendChild(script);
           sendPing(data);
           return true;
         },
       };
       sendPing(data);
-      if (sampleRUM.cases[checkpoint]) { sampleRUM.cases[checkpoint](); }
+      if (sampleRUM.cases[checkpoint]) {
+        sampleRUM.cases[checkpoint]();
+      }
     }
   } catch (error) {
     // something went wrong
@@ -101,7 +118,9 @@ export function loadCSS(href, callback) {
  */
 export function getMetadata(name) {
   const attr = name && name.includes(':') ? 'property' : 'name';
-  const meta = [...document.head.querySelectorAll(`meta[${attr}="${name}"]`)].map((m) => m.content).join(', ');
+  const meta = [...document.head.querySelectorAll(`meta[${attr}="${name}"]`)]
+    .map((m) => m.content)
+    .join(', ');
   return meta || null;
 }
 
@@ -126,7 +145,11 @@ export function addPublishDependencies(url) {
  */
 export function toClassName(name) {
   return name && typeof name === 'string'
-    ? name.toLowerCase().replace(/[^0-9a-z]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+    ? name
+        .toLowerCase()
+        .replace(/[^0-9a-z]/gi, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
     : '';
 }
 
@@ -150,7 +173,9 @@ export function decorateIcons(element = document) {
     }
     const icon = span.classList[1].substring(5);
     // eslint-disable-next-line no-use-before-define
-    const resp = await fetch(`${window.hlx.codeBasePath}${ICON_ROOT}/${icon}.svg`);
+    const resp = await fetch(
+      `${window.hlx.codeBasePath}${ICON_ROOT}/${icon}.svg`
+    );
     if (resp.ok) {
       const iconHTML = await resp.text();
       if (iconHTML.match(/<style/i)) {
@@ -170,7 +195,9 @@ export function decorateIcons(element = document) {
  */
 export async function fetchPlaceholders(prefix = 'default') {
   window.placeholders = window.placeholders || {};
+
   const loaded = window.placeholders[`${prefix}-loaded`];
+
   if (!loaded) {
     window.placeholders[`${prefix}-loaded`] = new Promise((resolve, reject) => {
       try {
@@ -192,7 +219,7 @@ export async function fetchPlaceholders(prefix = 'default') {
     });
   }
   await window.placeholders[`${prefix}-loaded`];
-  return (window.placeholders[prefix]);
+  return window.placeholders[prefix];
 }
 
 /**
@@ -201,6 +228,7 @@ export async function fetchPlaceholders(prefix = 'default') {
  */
 export function decorateBlock(block) {
   const shortBlockName = block.classList[0];
+  // console.log(shortBlockName);
   if (shortBlockName) {
     block.classList.add('block');
     block.setAttribute('data-block-name', shortBlockName);
@@ -283,7 +311,9 @@ export function decorateSections($main) {
       const keys = Object.keys(meta);
       keys.forEach((key) => {
         if (key === 'style') {
-          const styles = meta.style.split(',').map((style) => toClassName(style.trim()));
+          const styles = meta.style
+            .split(',')
+            .map((style) => toClassName(style.trim()));
           styles.forEach((style) => section.classList.add(style));
         } else {
           section.dataset[toCamelCase(key)] = meta[key];
@@ -304,7 +334,9 @@ export function updateSectionsStatus(main) {
     const section = sections[i];
     const status = section.getAttribute('data-section-status');
     if (status !== 'loaded') {
-      const loadingBlock = section.querySelector('.block[data-block-status="initialized"], .block[data-block-status="loading"]');
+      const loadingBlock = section.querySelector(
+        '.block[data-block-status="initialized"], .block[data-block-status="loading"]'
+      );
       if (loadingBlock) {
         section.setAttribute('data-section-status', 'loading');
         break;
@@ -353,7 +385,7 @@ export function buildBlock(blockName, content) {
     });
     blockEl.appendChild(rowEl);
   });
-  return (blockEl);
+  return blockEl;
 }
 
 /**
@@ -361,12 +393,20 @@ export function buildBlock(blockName, content) {
  * @param {Element} block The block element
  */
 export async function loadBlock(block, eager = false) {
-  if (!(block.getAttribute('data-block-status') === 'loading' || block.getAttribute('data-block-status') === 'loaded')) {
+  if (
+    !(
+      block.getAttribute('data-block-status') === 'loading' ||
+      block.getAttribute('data-block-status') === 'loaded'
+    )
+  ) {
     block.setAttribute('data-block-status', 'loading');
     const blockName = block.getAttribute('data-block-name');
     try {
       const cssLoaded = new Promise((resolve) => {
-        loadCSS(`${window.hlx.codeBasePath}/blocks/${blockName}/${blockName}.css`, resolve);
+        loadCSS(
+          `${window.hlx.codeBasePath}/blocks/${blockName}/${blockName}.css`,
+          resolve
+        );
       });
       const decorationComplete = new Promise((resolve) => {
         (async () => {
@@ -411,7 +451,15 @@ export async function loadBlocks(main) {
  * @param {boolean} eager load image eager
  * @param {Array} breakpoints breakpoints and corresponding params (eg. width)
  */
-export function createOptimizedPicture(src, alt = '', eager = false, breakpoints = [{ media: '(min-width: 400px)', width: '2000' }, { width: '750' }]) {
+export function createOptimizedPicture(
+  src,
+  alt = '',
+  eager = false,
+  breakpoints = [
+    { media: '(min-width: 400px)', width: '2000' },
+    { width: '750' },
+  ]
+) {
   const url = new URL(src, window.location.href);
   const picture = document.createElement('picture');
   const { pathname } = url;
@@ -422,7 +470,10 @@ export function createOptimizedPicture(src, alt = '', eager = false, breakpoints
     const source = document.createElement('source');
     if (br.media) source.setAttribute('media', br.media);
     source.setAttribute('type', 'image/webp');
-    source.setAttribute('srcset', `${pathname}?width=${br.width}&format=webply&optimize=medium`);
+    source.setAttribute(
+      'srcset',
+      `${pathname}?width=${br.width}&format=webply&optimize=medium`
+    );
     picture.appendChild(source);
   });
 
@@ -431,14 +482,20 @@ export function createOptimizedPicture(src, alt = '', eager = false, breakpoints
     if (i < breakpoints.length - 1) {
       const source = document.createElement('source');
       if (br.media) source.setAttribute('media', br.media);
-      source.setAttribute('srcset', `${pathname}?width=${br.width}&format=${ext}&optimize=medium`);
+      source.setAttribute(
+        'srcset',
+        `${pathname}?width=${br.width}&format=${ext}&optimize=medium`
+      );
       picture.appendChild(source);
     } else {
       const img = document.createElement('img');
       img.setAttribute('loading', eager ? 'eager' : 'lazy');
       img.setAttribute('alt', alt);
       picture.appendChild(img);
-      img.setAttribute('src', `${pathname}?width=${br.width}&format=${ext}&optimize=medium`);
+      img.setAttribute(
+        'src',
+        `${pathname}?width=${br.width}&format=${ext}&optimize=medium`
+      );
     }
   });
 
@@ -500,17 +557,28 @@ export function decorateButtons(element) {
       const up = a.parentElement;
       const twoup = a.parentElement.parentElement;
       if (!a.querySelector('img')) {
-        if (up.childNodes.length === 1 && (up.tagName === 'P' || up.tagName === 'DIV')) {
+        if (
+          up.childNodes.length === 1 &&
+          (up.tagName === 'P' || up.tagName === 'DIV')
+        ) {
           a.className = 'button primary'; // default
           up.classList.add('button-container');
         }
-        if (up.childNodes.length === 1 && up.tagName === 'STRONG'
-          && twoup.childNodes.length === 1 && twoup.tagName === 'P') {
+        if (
+          up.childNodes.length === 1 &&
+          up.tagName === 'STRONG' &&
+          twoup.childNodes.length === 1 &&
+          twoup.tagName === 'P'
+        ) {
           a.className = 'button primary';
           twoup.classList.add('button-container');
         }
-        if (up.childNodes.length === 1 && up.tagName === 'EM'
-          && twoup.childNodes.length === 1 && twoup.tagName === 'P') {
+        if (
+          up.childNodes.length === 1 &&
+          up.tagName === 'EM' &&
+          twoup.childNodes.length === 1 &&
+          twoup.tagName === 'P'
+        ) {
           a.className = 'button secondary';
           twoup.classList.add('button-container');
         }
@@ -543,7 +611,8 @@ async function waitForLCP() {
   // eslint-disable-next-line no-use-before-define
   const lcpBlocks = LCP_BLOCKS;
   const block = document.querySelector('.block');
-  const hasLCPBlock = (block && lcpBlocks.includes(block.getAttribute('data-block-name')));
+  const hasLCPBlock =
+    block && lcpBlocks.includes(block.getAttribute('data-block-name'));
   if (hasLCPBlock) await loadBlock(block, true);
 
   document.querySelector('body').classList.add('appear');
@@ -573,13 +642,16 @@ async function loadPage(doc) {
 
 export function initHlx() {
   window.hlx = window.hlx || {};
-  window.hlx.lighthouse = new URLSearchParams(window.location.search).get('lighthouse') === 'on';
+  window.hlx.lighthouse =
+    new URLSearchParams(window.location.search).get('lighthouse') === 'on';
   window.hlx.codeBasePath = '';
 
   const scriptEl = document.querySelector('script[src$="/scripts/scripts.js"]');
   if (scriptEl) {
     try {
-      [window.hlx.codeBasePath] = new URL(scriptEl.src).pathname.split('/scripts/scripts.js');
+      [window.hlx.codeBasePath] = new URL(scriptEl.src).pathname.split(
+        '/scripts/scripts.js'
+      );
     } catch (error) {
       // eslint-disable-next-line no-console
       console.log(error);
@@ -604,7 +676,10 @@ sampleRUM('top');
 window.addEventListener('load', () => sampleRUM('load'));
 
 window.addEventListener('unhandledrejection', (event) => {
-  sampleRUM('error', { source: event.reason.sourceURL, target: event.reason.line });
+  sampleRUM('error', {
+    source: event.reason.sourceURL,
+    target: event.reason.line,
+  });
 });
 
 window.addEventListener('error', (event) => {
@@ -617,7 +692,11 @@ function buildHeroBlock(main) {
   const h1 = main.querySelector('h1');
   const picture = main.querySelector('picture');
   // eslint-disable-next-line no-bitwise
-  if (h1 && picture && (h1.compareDocumentPosition(picture) & Node.DOCUMENT_POSITION_PRECEDING)) {
+  if (
+    h1 &&
+    picture &&
+    h1.compareDocumentPosition(picture) & Node.DOCUMENT_POSITION_PRECEDING
+  ) {
     const section = document.createElement('div');
     section.append(buildBlock('hero', { elems: [picture, h1] }));
     main.prepend(section);
@@ -659,7 +738,7 @@ export function decorateMain(main) {
   // hopefully forward compatible button decoration
   decorateButtons(main);
   decorateIcons(main);
-  buildAutoBlocks(main);
+  // buildAutoBlocks(main);
   decorateSections(main);
   decorateBlocks(main);
 }
