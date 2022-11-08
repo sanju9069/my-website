@@ -33,14 +33,14 @@ export default function decorate(block) {
       }
       cardBodyEle.append(div);
     }
-    // block
-    //   .querySelectorAll('img')
-    //   .forEach((img) =>
-    //     img
-    //       .closest('picture')
-    //       .replaceWith(
-    //         createOptimizedPicture(img.src, img.alt, false, [{ width: '750' }])
-    //       )
-    //   );
+    block
+      .querySelectorAll('img')
+      .forEach((img) =>
+        img
+          .closest('picture')
+          .replaceWith(
+            createOptimizedPicture(img.src, img.alt, false, [{ width: '750' }])
+          )
+      );
   });
 }
